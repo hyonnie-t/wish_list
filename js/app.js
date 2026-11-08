@@ -7,8 +7,11 @@ const CATS = ['뷰티', '헤어·바디', '드럭스토어 건강', '생활용�
 const CAT_EMO = { '뷰티': '💄', '헤어·바디': '🧴', '드럭스토어 건강': '💊', '생활용품': '🏠', '먹거리': '🍡', '패션·잡화': '👜', '디지털': '🎧', '책·문구': '📚', '취미': '🧶', '기타': '🎀' };
 // 목록마다 통화가 정해진다. 엔화 목록은 여행용(세금·면세·매장 모드), 원화 목록은 평소 위시리스트(가격·어디서·링크)
 const DEFAULT_LISTS = [{ id: 'japan', 이름: '일본 여행', 통화: 'JPY', 예산: 0 }, { id: 'wish', 이름: '위시리스트', 통화: 'KRW', 예산: 0 }];
-const PRIOS = ['꼭 살 것', '있으면 살 것', '가격 보고 결정'];
-const PRIO_CLS = { '꼭 살 것': 'must', '있으면 살 것': 'maybe', '가격 보고 결정': 'price' };
+// 우선순위 = «언제 살까». 나중에 살 것은 2026-11-08 추가(맨 뒤라 정렬에서도 맨 뒤)
+const PRIOS = ['꼭 살 것', '있으면 살 것', '가격 보고 결정', '나중에 살 것'];
+const PRIO_CLS = { '꼭 살 것': 'must', '있으면 살 것': 'maybe', '가격 보고 결정': 'price', '나중에 살 것': 'later' };
+const PRIO_EMO = { '꼭 살 것': '💗', '있으면 살 것': '🙂', '가격 보고 결정': '🏷️', '나중에 살 것': '⏳' };
+const prioOf = (p) => (PRIOS.includes(p.우선순위) ? p.우선순위 : '있으면 살 것');
 const PHOTO_KINDS = ['정면', '뒷면', '진열대', '색상 구분', '헷갈리는 제품', '기타'];
 
 let products = [];          // 지워지지 않은 상품
@@ -226,7 +229,7 @@ function ph(p) {
   const c = cover(p);
   return `<div class="ph ${c ? 'has-img' : ''}" style="background-color:${catVar(p.대분류)}">
     ${c ? `<img src="${img(c.data)}" alt="" loading="lazy">` : `<span class="emo" aria-hidden="true">${CAT_EMO[p.대분류] || '🎀'}</span>`}
-    <span class="prio ${PRIO_CLS[p.우선순위] || 'maybe'}">${esc(p.우선순위)}</span>
+    <span class="prio ${PRIO_CLS[prioOf(p)]}">${esc(prioOf(p))}</span>
     ${c ? '' : `<span class="brand">${esc(p.브랜드_일본어 || p.브랜드_한글 || '')}</span>`}
     ${isBought(p) ? `<div class="done-stamp"><span>${isJPItem(p) ? '購入済' : '샀어요'}<br>♡</span></div>` : isSkipped(p) ? '<div class="done-stamp skip"><span>안 사도<br>돼요</span></div>' : ''}
   </div>`;
@@ -244,8 +247,18 @@ function summaryHTML() {
     </div>
     <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="산 비율"><i style="width:${pct}%"></i></div>
     <div class="note">${t.done ? `실제 쓴 돈 ${money(t.real, jp)}${jp ? ` (${won(t.real * S.rate)})` : ''} · ` : ''}${jp ? '세금 포함 · ' : ''}가격 미정 ${t.unknown}개는 빠져 있어요</div>
+    ${mustLine(jp)}
     ${md.m === 'dizzy' ? `<div class="mood dizzy">🌀 눈 돌아가요! ${base}보다 ${money(t.real - md.limit, jp)} 더 썼어요</div>` : md.m === 'wobble' ? `<div class="mood">💦 ${base}의 ${md.pct}%를 썼어요. 조금만 더 사면 눈 돌아가요</div>` : ''}
   </section>`;
+}
+
+// 아직 안 산(필요없어짐도 아닌) 상품을 «언제 살까»별로 센다
+const todoOf = (pr) => inCur().filter((p) => !isBought(p) && !isSkipped(p) && (!pr || prioOf(p) === pr));
+function mustLine(jp) {
+  const must = todoOf('꼭 살 것'), later = todoOf('나중에 살 것');
+  if (!must.length && !later.length) return '';
+  const sum = must.reduce((s, p) => s + (estPrice(p) || 0) * (p.목표개수 || 1), 0);
+  return `<div class="must-line">${must.length ? `<button class="mchip must" data-prio-go="꼭 살 것">💗 꼭 살 것 <b>${must.length}개</b>${sum ? ` · ${money(sum, jp)}` : ''}</button>` : ''}${later.length ? `<button class="mchip later" data-prio-go="나중에 살 것">⏳ 나중에 <b>${later.length}개</b></button>` : ''}</div>`;
 }
 
 function filtered() {
@@ -255,12 +268,12 @@ function filtered() {
     if (ui.buy === 'todo' && (isBought(p) || isSkipped(p))) return false;
     if (ui.buy === 'done' && !isBought(p)) return false;
     if (ui.buy === 'skip' && !isSkipped(p)) return false;
-    if (ui.prio !== '전체' && p.우선순위 !== ui.prio) return false;
+    if (ui.prio !== '전체' && prioOf(p) !== ui.prio) return false;
     if (ui.shop !== '전체' && !shopsOf(p).includes(ui.shop)) return false;
     if (!q) return true;
     return [p.이름_한글, p.이름_일본어, p.읽는법, p.브랜드_한글, p.브랜드_일본어, p.세부분류, p.메모].join(' ').toLowerCase().includes(q);
   });
-  const pr = (p) => PRIOS.indexOf(p.우선순위) + 1 || 9;
+  const pr = (p) => PRIOS.indexOf(prioOf(p));
   const cmp = { prio: (a, b) => pr(a) - pr(b), price: (a, b) => (estPrice(a) ?? 1e9) - (estPrice(b) ?? 1e9), name: (a, b) => a.이름_한글.localeCompare(b.이름_한글, 'ko') }[ui.sort];
   const rank = (p) => (isSkipped(p) ? 2 : isBought(p) ? 1 : 0);
   return list.sort((a, b) => rank(a) - rank(b) || cmp(a, b));
@@ -278,9 +291,9 @@ function renderList() {
         : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'}</button>
     </div>
     <div class="chips" role="group" aria-label="대분류">${cats.map((c) => `<button class="chip" data-cat="${c}" aria-pressed="${ui.cat === c}">${CAT_EMO[c] ? CAT_EMO[c] + ' ' : ''}${c}</button>`).join('')}</div>
+    <div class="chips when" role="group" aria-label="언제 살까">${['전체', ...PRIOS].map((x) => { const n = x === '전체' ? 0 : todoOf(x).length; return x !== '전체' && !n && ui.prio !== x ? '' : `<button class="chip" data-prio="${x}" aria-pressed="${ui.prio === x}">${x === '전체' ? '언제든' : PRIO_EMO[x] + ' ' + x}${n ? ` <span class="chip-n">${n}</span>` : ''}</button>`; }).join('')}</div>
     <div class="subtools">
       <select id="buyF" aria-label="구입 여부"><option value="all" ${ui.buy === 'all' ? 'selected' : ''}>전부 보기</option><option value="todo" ${ui.buy === 'todo' ? 'selected' : ''}>살 것만</option><option value="done" ${ui.buy === 'done' ? 'selected' : ''}>산 것만</option><option value="skip" ${ui.buy === 'skip' ? 'selected' : ''}>필요없어진 것</option></select>
-      <select id="prioF" aria-label="우선순위"><option value="전체">우선순위 전부</option>${PRIOS.map((x) => `<option ${ui.prio === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
       ${storesNow().length ? `<select id="shopF" aria-label="상점"><option value="전체">${jp ? '판매처' : '상점'} 전부</option>${storesNow().map((x) => `<option value="${esc(x)}" ${ui.shop === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
       <select id="sort" aria-label="정렬">
         <option value="prio" ${ui.sort === 'prio' ? 'selected' : ''}>우선순위순</option>
@@ -295,7 +308,9 @@ function renderList() {
   $('#q').addEventListener('input', (e) => { ui.q = e.target.value; drawGrid(); });
   $('#view').onclick = () => { S.view = S.view === 'grid' ? 'list' : 'grid'; db.setMeta('view', S.view); renderList(); };
   $('#buyF').onchange = (e) => { ui.buy = e.target.value; drawGrid(); };
-  $('#prioF').onchange = (e) => { ui.prio = e.target.value; drawGrid(); };
+  $$('.chip[data-prio]').forEach((b) => (b.onclick = () => { ui.prio = b.dataset.prio; renderList(); }));
+  // 요약의 «꼭 살 것 N개»를 누르면 그것만 (살 것만) 보기
+  $$('[data-prio-go]').forEach((b) => (b.onclick = () => { ui.prio = b.dataset.prioGo; ui.buy = 'todo'; renderList(); $('#grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   if ($('#shopF')) $('#shopF').onchange = (e) => { ui.shop = e.target.value; drawGrid(); };
   $('#sort').onchange = (e) => { ui.sort = e.target.value; drawGrid(); };
   $$('.chip[data-cat]').forEach((b) => (b.onclick = () => { ui.cat = b.dataset.cat; renderList(); }));
@@ -371,6 +386,7 @@ function openDetail(id) {
         ${p.용량_수량 ? `<div class="sub">${esc(p.용량_수량)}</div>` : ''}
         ${link ? `<a class="btn dark block" href="${esc(link)}" target="_blank" rel="noopener" style="margin-top:12px">🔗 사러 가기</a>` : ''}
       </div>`}
+      ${isBought(p) || isSkipped(p) ? '' : `<div class="sec when-pick"><h3>언제 살까</h3><div class="seg" role="group" aria-label="언제 살까">${PRIOS.map((x) => `<button class="seg-b ${PRIO_CLS[x]}" data-when="${x}" aria-pressed="${prioOf(p) === x}">${PRIO_EMO[x]} ${x}</button>`).join('')}</div></div>`}
       ${jp ? `<div class="prices">
         <div class="pbox"><div class="k">세금 포함</div><div class="v">${e != null ? yen(e) : '—'}</div></div>
         <div class="pbox"><div class="k">원화 (1엔 ${S.rate}원)</div><div class="v">${e != null ? won(e * S.rate) : '—'}</div></div>
@@ -409,6 +425,14 @@ function openDetail(id) {
   const sl = $('#slider');
   sl.onscroll = () => { const i = Math.round(sl.scrollLeft / sl.clientWidth); $$('#dots i').forEach((d, j) => d.classList.toggle('on', i === j)); };
   $$('.slide.img', sl).forEach((s) => (s.onclick = () => openZoom(pics, +s.dataset.i)));
+  // 상세에서 바로 «언제 살까» 바꾸기: 창은 그대로 두고 눌린 버튼만 바꾼다
+  $$('[data-when]').forEach((b) => (b.onclick = async () => {
+    if (prioOf(p) === b.dataset.when) return;
+    p.우선순위 = b.dataset.when; await saveProduct(p);
+    $$('[data-when]').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    render();
+  }));
   if (isBought(p)) $('#unbuy').onclick = () => unbuy(p, true);
   else if (isSkipped(p)) $('#unskip').onclick = () => setSkip(p, '');
   else { $('#buy').onclick = () => openBuy(p); $('#skip').onclick = () => setSkip(p, today()); }
