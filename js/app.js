@@ -117,6 +117,15 @@ const curList = () => listById(S.cur) || S.lists[0];
 const listOf = (p) => (listById(p.목록) ? p.목록 : S.lists[0].id);
 const isJP = (l = curList()) => l?.통화 === 'JPY';
 const isJPItem = (p) => isJP(listById(listOf(p)));
+// 상점별로 묶을 이름. 엔화 목록은 판매처, 원화 목록은 «어디서»에서 괄호 메모를 뺀 이름 (2026-11-08)
+const normShop = (s) => String(s || '').replace(/\s*\(.*\)\s*$/, '').trim();
+const shopsOf = (p) => (isJPItem(p) ? (p.판매처 || []).map((x) => x.이름) : [normShop(p.한국가격?.어디)].filter(Boolean));
+function storesNow() {
+  if (isJP()) return S.stores;
+  const n = {};
+  inCur().forEach((p) => shopsOf(p).forEach((k) => (n[k] = (n[k] || 0) + 1)));
+  return Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b, 'ko'));
+}
 const inCur = () => products.filter((p) => listOf(p) === curList().id);
 const listEmo = (l) => (l.통화 === 'JPY' ? '✈️' : '💝');
 // 가격 한 줄: 엔화 상품은 엔(원화 환산), 원화 상품은 원
@@ -203,11 +212,9 @@ const headImg = () => { const { m } = mood(); return `<img src="${mascotSrc(m)}"
 function render() {
   const lg = $('.logo img'), { m } = mood();
   lg.src = mascotSrc(m); lg.className = m;
-  // 매장 모드·환율은 엔화(여행) 목록에서만
+  // 환율은 엔화(여행) 목록에서만. 상점 탭은 모든 목록에(원화 목록은 «상점별», 2026-11-08)
   const jp = isJP();
-  if (!jp && S.tab === 'store') S.tab = 'list';
-  $('.tab[data-tab=store]').hidden = !jp;
-  $('.tabs-in').classList.toggle('three', !jp);
+  $('.tab[data-tab=store]').innerHTML = jp ? '<span class="ti" aria-hidden="true">🏪</span>매장 모드' : '<span class="ti" aria-hidden="true">🏪</span>상점별';
   $('.rate').hidden = !jp;
   $$('.tab').forEach((t) => t.setAttribute('aria-current', t.dataset.tab === S.tab));
   $('#fab').hidden = S.tab !== 'list';
@@ -248,7 +255,7 @@ function filtered() {
     if (ui.buy === 'done' && !isBought(p)) return false;
     if (ui.buy === 'skip' && !isSkipped(p)) return false;
     if (ui.prio !== '전체' && p.우선순위 !== ui.prio) return false;
-    if (ui.shop !== '전체' && !(p.판매처 || []).some((x) => x.이름 === ui.shop)) return false;
+    if (ui.shop !== '전체' && !shopsOf(p).includes(ui.shop)) return false;
     if (!q) return true;
     return [p.이름_한글, p.이름_일본어, p.읽는법, p.브랜드_한글, p.브랜드_일본어, p.세부분류, p.메모].join(' ').toLowerCase().includes(q);
   });
@@ -273,7 +280,7 @@ function renderList() {
     <div class="subtools">
       <select id="buyF" aria-label="구입 여부"><option value="all" ${ui.buy === 'all' ? 'selected' : ''}>전부 보기</option><option value="todo" ${ui.buy === 'todo' ? 'selected' : ''}>살 것만</option><option value="done" ${ui.buy === 'done' ? 'selected' : ''}>산 것만</option><option value="skip" ${ui.buy === 'skip' ? 'selected' : ''}>필요없어진 것</option></select>
       <select id="prioF" aria-label="우선순위"><option value="전체">우선순위 전부</option>${PRIOS.map((x) => `<option ${ui.prio === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
-      ${jp ? `<select id="shopF" aria-label="판매처"><option value="전체">판매처 전부</option>${S.stores.map((x) => `<option value="${esc(x)}" ${ui.shop === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
+      ${storesNow().length ? `<select id="shopF" aria-label="상점"><option value="전체">${jp ? '판매처' : '상점'} 전부</option>${storesNow().map((x) => `<option value="${esc(x)}" ${ui.shop === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
       <select id="sort" aria-label="정렬">
         <option value="prio" ${ui.sort === 'prio' ? 'selected' : ''}>우선순위순</option>
         <option value="price" ${ui.sort === 'price' ? 'selected' : ''}>가격순</option>
@@ -288,7 +295,7 @@ function renderList() {
   $('#view').onclick = () => { S.view = S.view === 'grid' ? 'list' : 'grid'; db.setMeta('view', S.view); renderList(); };
   $('#buyF').onchange = (e) => { ui.buy = e.target.value; drawGrid(); };
   $('#prioF').onchange = (e) => { ui.prio = e.target.value; drawGrid(); };
-  if (jp) $('#shopF').onchange = (e) => { ui.shop = e.target.value; drawGrid(); };
+  if ($('#shopF')) $('#shopF').onchange = (e) => { ui.shop = e.target.value; drawGrid(); };
   $('#sort').onchange = (e) => { ui.sort = e.target.value; drawGrid(); };
   $$('.chip[data-cat]').forEach((b) => (b.onclick = () => { ui.cat = b.dataset.cat; renderList(); }));
   bindListBar();
@@ -698,26 +705,27 @@ function openEdit(id) {
 
 /* ---------- 매장 모드 ---------- */
 function renderStore() {
-  if (!S.stores.includes(ui.store)) ui.store = S.stores[0];
-  const list = inCur().filter((p) => !isSkipped(p)).filter((p) => (p.판매처 || []).some((s) => s.이름 === ui.store) || (ui.withUnknown && !(p.판매처 || []).length))
+  const jp = isJP(), stores = storesNow();
+  if (!stores.includes(ui.store)) ui.store = stores[0];
+  const list = inCur().filter((p) => !isSkipped(p)).filter((p) => shopsOf(p).includes(ui.store) || (ui.withUnknown && !shopsOf(p).length))
     .sort((a, b) => isBought(a) - isBought(b) || PRIOS.indexOf(a.우선순위) - PRIOS.indexOf(b.우선순위));
   const left = list.filter((p) => !isBought(p)).length;
-  $('#main').innerHTML = `<div class="store-head">${headImg()}<div><h2>매장 모드</h2><p>고른 매장에서 살 것만 크게! 누르면 바로 구매 완료</p></div></div>
-    <div class="chips" role="group" aria-label="판매처">${S.stores.map((s) => `<button class="chip" data-st="${esc(s)}" aria-pressed="${ui.store === s}">${esc(s)}</button>`).join('')}</div>
-    <div class="subtools"><label class="toggle"><input type="checkbox" id="unk" ${ui.withUnknown ? 'checked' : ''}> 판매처 미정도 보기</label><span class="count">남은 것 ${left}개</span></div>
+  $('#main').innerHTML = `<div class="store-head">${headImg()}<div><h2>${jp ? '매장 모드' : '상점별'}</h2><p>${jp ? '고른 매장에서 살 것만 크게! 누르면 바로 구매 완료' : '고른 상점에서 살 것만 모아 봐요. 누르면 바로 구매 완료'}</p></div></div>
+    <div class="chips" role="group" aria-label="${jp ? '판매처' : '상점'}">${stores.map((s) => `<button class="chip" data-st="${esc(s)}" aria-pressed="${ui.store === s}">${esc(s)}</button>`).join('')}</div>
+    <div class="subtools"><label class="toggle"><input type="checkbox" id="unk" ${ui.withUnknown ? 'checked' : ''}> ${jp ? '판매처' : '상점'} 미정도 보기</label><span class="count">남은 것 ${left}개</span></div>
     <div class="big-list">${list.length ? list.map((p) => {
       const e = estPrice(p), sp = (p.판매처 || []).find((s) => s.이름 === ui.store);
       return `<div class="bigcard ${isBought(p) ? 'bought' : ''}">
         <button class="ph-btn" data-open="${esc(p.id)}" aria-label="${esc(p.이름_한글)} 자세히">${ph(p)}</button>
         <div class="info">
-          <div class="jp brand-line">${esc(p.브랜드_일본어 || p.브랜드_한글)}</div>
+          <div class="${jp ? 'jp ' : ''}brand-line">${esc(jp ? p.브랜드_일본어 || p.브랜드_한글 : p.브랜드_한글 || p.브랜드_일본어)}</div>
           ${p.이름_일본어 ? `<div class="jpname">${esc(p.이름_일본어)}</div>` : ''}
           <div class="krname-big">${esc(p.이름_한글)}</div>
           ${sp?.지점 || p.매장내위치 ? `<div class="sub">${esc([sp?.지점, p.매장내위치].filter(Boolean).join(' · '))}</div>` : ''}
-          <div class="act"><span>${sp?.가격 ? yen(sp.가격) : e != null ? yen(e) : '가격 미정'}</span>
+          <div class="act"><span>${sp?.가격 ? yen(sp.가격) : e != null ? money(e, jp) : '가격 미정'}</span>
           <button class="check" data-id="${esc(p.id)}">${isBought(p) ? '샀어요 ♡' : '샀어요'}</button></div>
         </div></div>`;
-    }).join('') : '<div class="empty-msg"><img src="images/mascot-320.png" alt="" width="96" height="96"><p>이 매장에서 살 것으로 정한 상품이 없어요.</p></div>'}</div>`;
+    }).join('') : `<div class="empty-msg"><img src="images/mascot-320.png" alt="" width="96" height="96"><p>${stores.length ? '이 매장에서 살 것으로 정한 상품이 없어요.' : '아직 «어디서»를 적은 상품이 없어요. 상품 고치기에서 어디서 살지 적으면 상점별로 모여요.'}</p></div>`}</div>`;
   $$('[data-st]').forEach((b) => (b.onclick = () => { ui.store = b.dataset.st; renderStore(); }));
   $('#unk').onchange = (e) => { ui.withUnknown = e.target.checked; renderStore(); };
   $$('[data-open]').forEach((b) => (b.onclick = () => openDetail(b.dataset.open)));
