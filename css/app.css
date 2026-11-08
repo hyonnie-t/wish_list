@@ -343,3 +343,56 @@ details.more[open]{display:grid;gap:12px;padding-bottom:12px}
 .sticky-act #skip{flex:none;padding-left:12px;padding-right:12px}
 /* 아이폰은 16px보다 작은 입력칸을 누르면 화면을 확대한 채로 둬서 화면이 어긋나 보인다 */
 @media (max-width:767px),(pointer:coarse){ input,select,textarea{font-size:16px!important} }
+
+/* ---------- 2026-11-08 정리: 덜 어지럽게 ---------- */
+/* 머리: 환율 칸이 세로로 깨지지 않게, 폰에서는 이름을 줄인다 */
+.rate{white-space:nowrap;flex:none}
+@media (max-width:420px){ .top-in:has(.rate:not([hidden])) .logo-rest{display:none} }
+/* 목록 칩은 한 줄 탭처럼 작게 */
+.listbar{padding:10px 2px 0}
+.listbar .chip{min-height:40px;font-size:14px;box-shadow:none}
+.listbar .chip[aria-pressed=true]{box-shadow:none}
+/* 요약 칸 여백 줄이기 */
+@media (max-width:767px){ .summary{margin:10px 0 4px;padding:12px 14px 10px;gap:6px} .summary .mascot{width:64px;height:64px} }
+/* 거르기 버튼과 접는 칸 */
+.fbtn{position:relative}
+.fbtn[aria-expanded=true]{background:var(--pink-soft);border-color:#FFC9D8;color:var(--pink-deep)}
+.fbadge{position:absolute;right:-2px;top:-2px;min-width:20px;height:20px;border-radius:999px;background:var(--pink);color:#fff;font-style:normal;font-size:12px;font-weight:800;line-height:20px;text-align:center;border:2px solid #fff;box-sizing:content-box}
+.fpane{margin-top:10px;background:#fff;border:2px solid var(--line);border-radius:20px;padding:12px;display:grid;gap:10px;animation:fdrop .2s ease-out}
+@keyframes fdrop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.fgrp{display:grid;gap:6px}
+.fgrp > b{font-family:var(--cute);font-weight:400;font-size:14px;color:var(--pink-deep)}
+.fpane .chips{padding:0}
+.fpane .chip{min-height:38px;font-size:13px;padding:0 12px;box-shadow:none}
+.fsel{display:flex;flex-wrap:wrap;gap:8px}
+.fsel select{flex:1 1 120px;min-height:44px;border:2px solid var(--line);border-radius:14px;background:var(--paper);padding:0 10px;font-family:var(--cute);color:var(--sub)}
+/* 분류 칩은 그림자 없이 낮게 */
+.chips.cats{padding:10px 2px 4px}
+.chips.cats .chip{min-height:38px;font-size:13px;padding:0 12px;box-shadow:none}
+.chips.cats .chip[aria-pressed=true]{box-shadow:none}
+/* 결과 줄: 개수·켜진 거르기·정렬 */
+.resline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 2px 0;font-size:13px;color:var(--sub)}
+.resline .count{margin-left:0;font-family:var(--cute)}
+.achip{border:0;border-radius:999px;background:var(--pink-soft);color:var(--pink-deep);font:inherit;font-family:var(--cute);font-size:13px;min-height:32px;padding:0 10px}
+.sortnm{margin-left:auto;font-family:var(--cute)}
+/* 카드: 기본(있으면 살 것) 딱지는 안 보이고, 다른 것만 작게 */
+.ph .prio{transform:none;font-size:11px;padding:2px 8px;box-shadow:0 1px 0 rgba(90,64,56,.12)}
+.grid{gap:12px}
+.card:hover{transform:translateY(-2px)}
+
+/* 상세 사진: 세로 사진도 잘리지 않게 칸 안에 다 보이게 (폰에서 가운데만 잘리던 문제) */
+.slider{padding:6px 0 0;gap:0;scroll-padding:0}
+.slide{width:calc(100% - 28px);margin:0 14px;max-height:56vh}
+.slide.img{background:#fff;border:2px solid var(--line);aspect-ratio:1/1}
+.slide.img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.slide .lbl{z-index:1;box-shadow:0 1px 0 rgba(90,64,56,.12)}
+.zoomhint{position:absolute;right:12px;bottom:12px;z-index:1;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--sub);display:grid;place-items:center;font-size:16px;box-shadow:0 1px 0 rgba(90,64,56,.12)}
+.sheet-close{top:14px;right:14px;width:40px;height:40px;font-size:20px;background:rgba(255,255,255,.95)}
+@media (min-width:768px){ .slide.img{aspect-ratio:auto} }
+/* «chips wrap»가 본문 틀 .wrap(가운데 정렬·아래 110px 여백)과 이름이 겹쳐 칩 묶음이 가운데로 몰리고 아래가 비던 것 */
+.chips.wrap{max-width:none;margin:0;padding:2px 2px 6px}
+.fpane .chips.wrap{padding:0}
+.logo-rest{margin-left:-6px}
+.slide.img .lbl{left:16px;bottom:16px;z-index:2}
+.slide.img .zoomhint{right:16px;bottom:16px;z-index:2}
+@media (min-width:768px){ .slide{height:min(420px,50vh);max-height:none} }

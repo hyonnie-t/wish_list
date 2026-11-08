@@ -229,7 +229,7 @@ function ph(p) {
   const c = cover(p);
   return `<div class="ph ${c ? 'has-img' : ''}" style="background-color:${catVar(p.대분류)}">
     ${c ? `<img src="${img(c.data)}" alt="" loading="lazy">` : `<span class="emo" aria-hidden="true">${CAT_EMO[p.대분류] || '🎀'}</span>`}
-    <span class="prio ${PRIO_CLS[prioOf(p)]}">${esc(prioOf(p))}</span>
+    ${prioOf(p) === '있으면 살 것' ? '' : `<span class="prio ${PRIO_CLS[prioOf(p)]}">${PRIO_EMO[prioOf(p)]} ${esc(prioOf(p))}</span>`}
     ${c ? '' : `<span class="brand">${esc(p.브랜드_일본어 || p.브랜드_한글 || '')}</span>`}
     ${isBought(p) ? `<div class="done-stamp"><span>${isJPItem(p) ? '購入済' : '샀어요'}<br>♡</span></div>` : isSkipped(p) ? '<div class="done-stamp skip"><span>안 사도<br>돼요</span></div>' : ''}
   </div>`;
@@ -282,37 +282,46 @@ function filtered() {
 function renderList() {
   const mine = inCur(), jp = isJP();
   const cats = ['전체', ...CATS.filter((c) => mine.some((p) => p.대분류 === c))];
+  // 2026-11-08 정리: 자주 안 바꾸는 거르기(언제·구입·상점·정렬)는 «거르기» 버튼 안으로 접고, 켜진 것만 지울 수 있는 칩으로 보인다
+  const SORT_NM = { prio: '우선순위순', price: '가격순', name: '이름순' }, BUY_NM = { todo: '살 것만', done: '산 것만', skip: '필요없어진 것' };
+  const act = [
+    ui.prio !== '전체' && { k: 'prio', t: PRIO_EMO[ui.prio] + ' ' + ui.prio },
+    ui.buy !== 'all' && { k: 'buy', t: BUY_NM[ui.buy] },
+    ui.shop !== '전체' && { k: 'shop', t: '🏪 ' + ui.shop },
+  ].filter(Boolean);
+  const pane = `<div class="fpane" id="fpane" ${ui.fopen ? '' : 'hidden'}>
+      <div class="fgrp"><b>언제 살까</b><div class="chips wrap when" role="group" aria-label="언제 살까">${['전체', ...PRIOS].map((x) => { const n = x === '전체' ? 0 : todoOf(x).length; return x !== '전체' && !n && ui.prio !== x ? '' : `<button class="chip" data-prio="${x}" aria-pressed="${ui.prio === x}">${x === '전체' ? '언제든' : PRIO_EMO[x] + ' ' + x}${n ? ` <span class="chip-n">${n}</span>` : ''}</button>`; }).join('')}</div></div>
+      <div class="fgrp"><b>보기</b><div class="fsel">
+      <select id="buyF" aria-label="구입 여부"><option value="all" ${ui.buy === 'all' ? 'selected' : ''}>전부 보기</option><option value="todo" ${ui.buy === 'todo' ? 'selected' : ''}>살 것만</option><option value="done" ${ui.buy === 'done' ? 'selected' : ''}>산 것만</option><option value="skip" ${ui.buy === 'skip' ? 'selected' : ''}>필요없어진 것</option></select>
+      ${storesNow().length ? `<select id="shopF" aria-label="상점"><option value="전체">${jp ? '판매처' : '상점'} 전부</option>${storesNow().map((x) => `<option value="${esc(x)}" ${ui.shop === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
+      <select id="sort" aria-label="정렬">${Object.entries(SORT_NM).map(([v, t]) => `<option value="${v}" ${ui.sort === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      </div></div>
+    </div>`;
   $('#main').innerHTML = listBar() + summaryHTML() + `
   <div class="tools">
     <div class="search">
-      <input id="q" type="search" placeholder="${jp ? '한글·일본어·브랜드로 찾기' : '이름·브랜드로 찾기'}" value="${esc(ui.q)}" aria-label="검색">
+      <input id="q" type="search" placeholder="${jp ? '이름·일본어·브랜드' : '이름·브랜드로 찾기'}" value="${esc(ui.q)}" aria-label="검색">
+      <button class="iconbtn fbtn" id="fbtn" aria-expanded="${!!ui.fopen}" aria-controls="fpane" aria-label="거르기·정렬${act.length ? ` (${act.length}개 켜짐)` : ''}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${act.length ? `<i class="fbadge">${act.length}</i>` : ''}</button>
       <button class="iconbtn" id="view" aria-label="${S.view === 'grid' ? '목록 보기로' : '사진 격자로'}">${S.view === 'grid'
         ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>'
         : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'}</button>
     </div>
-    <div class="chips" role="group" aria-label="대분류">${cats.map((c) => `<button class="chip" data-cat="${c}" aria-pressed="${ui.cat === c}">${CAT_EMO[c] ? CAT_EMO[c] + ' ' : ''}${c}</button>`).join('')}</div>
-    <div class="chips when" role="group" aria-label="언제 살까">${['전체', ...PRIOS].map((x) => { const n = x === '전체' ? 0 : todoOf(x).length; return x !== '전체' && !n && ui.prio !== x ? '' : `<button class="chip" data-prio="${x}" aria-pressed="${ui.prio === x}">${x === '전체' ? '언제든' : PRIO_EMO[x] + ' ' + x}${n ? ` <span class="chip-n">${n}</span>` : ''}</button>`; }).join('')}</div>
-    <div class="subtools">
-      <select id="buyF" aria-label="구입 여부"><option value="all" ${ui.buy === 'all' ? 'selected' : ''}>전부 보기</option><option value="todo" ${ui.buy === 'todo' ? 'selected' : ''}>살 것만</option><option value="done" ${ui.buy === 'done' ? 'selected' : ''}>산 것만</option><option value="skip" ${ui.buy === 'skip' ? 'selected' : ''}>필요없어진 것</option></select>
-      ${storesNow().length ? `<select id="shopF" aria-label="상점"><option value="전체">${jp ? '판매처' : '상점'} 전부</option>${storesNow().map((x) => `<option value="${esc(x)}" ${ui.shop === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
-      <select id="sort" aria-label="정렬">
-        <option value="prio" ${ui.sort === 'prio' ? 'selected' : ''}>우선순위순</option>
-        <option value="price" ${ui.sort === 'price' ? 'selected' : ''}>가격순</option>
-        <option value="name" ${ui.sort === 'name' ? 'selected' : ''}>이름순</option>
-      </select>
-      <span class="count" id="count"></span>
-    </div>
+    ${pane}
+    <div class="chips cats" role="group" aria-label="대분류">${cats.map((c) => `<button class="chip" data-cat="${c}" aria-pressed="${ui.cat === c}">${CAT_EMO[c] ? CAT_EMO[c] + ' ' : ''}${c}</button>`).join('')}</div>
+    <div class="resline"><span class="count" id="count"></span>${act.map((a) => `<button class="achip" data-off="${a.k}" aria-label="${esc(a.t)} 끄기">${esc(a.t)} <span aria-hidden="true">×</span></button>`).join('')}<span class="sortnm">${SORT_NM[ui.sort]}</span></div>
   </div>
   <div class="grid ${S.view === 'list' ? 'list' : ''}" id="grid"></div>`;
   drawGrid();
   $('#q').addEventListener('input', (e) => { ui.q = e.target.value; drawGrid(); });
   $('#view').onclick = () => { S.view = S.view === 'grid' ? 'list' : 'grid'; db.setMeta('view', S.view); renderList(); };
-  $('#buyF').onchange = (e) => { ui.buy = e.target.value; drawGrid(); };
+  $('#fbtn').onclick = () => { ui.fopen = !ui.fopen; renderList(); };
+  $$('[data-off]').forEach((b) => (b.onclick = () => { ({ prio: () => (ui.prio = '전체'), buy: () => (ui.buy = 'all'), shop: () => (ui.shop = '전체') })[b.dataset.off](); renderList(); }));
+  $('#buyF').onchange = (e) => { ui.buy = e.target.value; renderList(); };
   $$('.chip[data-prio]').forEach((b) => (b.onclick = () => { ui.prio = b.dataset.prio; renderList(); }));
   // 요약의 «꼭 살 것 N개»를 누르면 그것만 (살 것만) 보기
   $$('[data-prio-go]').forEach((b) => (b.onclick = () => { ui.prio = b.dataset.prioGo; ui.buy = 'todo'; renderList(); $('#grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
-  if ($('#shopF')) $('#shopF').onchange = (e) => { ui.shop = e.target.value; drawGrid(); };
-  $('#sort').onchange = (e) => { ui.sort = e.target.value; drawGrid(); };
+  if ($('#shopF')) $('#shopF').onchange = (e) => { ui.shop = e.target.value; renderList(); };
+  $('#sort').onchange = (e) => { ui.sort = e.target.value; renderList(); };
   $$('.chip[data-cat]').forEach((b) => (b.onclick = () => { ui.cat = b.dataset.cat; renderList(); }));
   bindListBar();
 }
@@ -367,11 +376,11 @@ function openDetail(id) {
   const mixPics = (p.헷갈리는제품 || []);
   const t = p.특징 || {};
   const slides = pics.length
-    ? pics.map((x, i) => `<button class="slide img" data-i="${i}" aria-label="사진 크게 보기"><img src="${img(x.data)}" alt="${esc(x.설명)}"><span class="lbl">${esc(x.설명 || '사진')}</span></button>`).join('')
+    ? pics.map((x, i) => `<button class="slide img" data-i="${i}" aria-label="사진 크게 보기"><img src="${img(x.data)}" alt="${esc(x.설명)}"><span class="lbl">${esc(x.설명 || '사진')}${pics.length > 1 ? ` · ${i + 1}/${pics.length}` : ''}</span><span class="zoomhint" aria-hidden="true">⤢</span></button>`).join('')
     : `<div class="slide" style="background-color:${catVar(p.대분류)}"><span class="slide-emo"><span>${CAT_EMO[p.대분류] || '🎀'}</span><span class="jp slide-brand">${esc(p.브랜드_일본어 || p.브랜드_한글)}</span></span><span class="lbl">사진 없음 · 수정에서 추가</span></div>`;
   openSheet(`<div class="grab"></div><button class="sheet-close" aria-label="닫기">×</button>
     <div class="slider" id="slider">${slides}</div>
-    <div class="dots" id="dots">${(pics.length ? pics : [0]).map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>
+    <div class="dots" id="dots" ${pics.length > 1 ? '' : 'hidden'}>${(pics.length ? pics : [0]).map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>
     <div class="d-body">
       ${jp ? `<div class="d-jp">
         <div class="brandjp">${esc(p.브랜드_일본어 || p.브랜드_한글)}</div>
