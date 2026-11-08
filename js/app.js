@@ -89,6 +89,7 @@ function fillEmpty(l, p) {
   if (!n.한국가격.어디 && p.한국가격?.어디) { n.한국가격.어디 = p.한국가격.어디; done.push('판매처'); }
   if (!n.링크 && p.링크) { n.링크 = p.링크; done.push('링크'); }
   if (!n.용량_수량 && p.용량_수량) { n.용량_수량 = p.용량_수량; done.push('용량'); }
+  if (!n.브랜드_한글 && p.브랜드_한글) { n.브랜드_한글 = p.브랜드_한글; done.push('브랜드'); }
   const have = new Set((n.추천이유_출처 || []).map((s) => s.주소));
   const more = (p.추천이유_출처 || []).filter((s) => s.주소 && !have.has(s.주소));
   if (more.length) { n.추천이유_출처 = [...(n.추천이유_출처 || []), ...more]; done.push('출처'); }
