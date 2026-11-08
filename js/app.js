@@ -427,8 +427,10 @@ function openDetail(id) {
   $$('.slide.img', sl).forEach((s) => (s.onclick = () => openZoom(pics, +s.dataset.i)));
   // 상세에서 바로 «언제 살까» 바꾸기: 창은 그대로 두고 눌린 버튼만 바꾼다
   $$('[data-when]').forEach((b) => (b.onclick = async () => {
-    if (prioOf(p) === b.dataset.when) return;
-    p.우선순위 = b.dataset.when; await saveProduct(p);
+    // 창을 연 사이 동기화로 상품이 새로 바뀌었을 수 있어 지금 것을 다시 집는다
+    const cur = products.find((x) => x.id === p.id) || p;
+    if (prioOf(cur) === b.dataset.when) return;
+    cur.우선순위 = b.dataset.when; await saveProduct(cur);
     $$('[data-when]').forEach((x) => x.setAttribute('aria-pressed', x === b));
     b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
     render();
@@ -558,7 +560,7 @@ function openEdit(id) {
       </div>
       <div class="row2">
         <label class="field">대분류<select name="대분류">${CATS.map((c) => `<option ${p.대분류 === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
-        <label class="field">우선순위<select name="우선순위">${PRIOS.map((c) => `<option ${p.우선순위 === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label class="field">우선순위<select name="우선순위">${PRIOS.map((c) => `<option ${prioOf(p) === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
       </div>
       <div class="row2 jp-only">
         <label class="field">세금 별도 ¥<input name="엔화_세금별도" inputmode="numeric" value="${v(p.엔화_세금별도)}"></label>
@@ -737,7 +739,7 @@ function renderStore() {
   const live = inCur().filter((p) => !isSkipped(p));
   const cnt = (s) => live.filter((p) => !isBought(p) && shopsOf(p).includes(s)).length;
   const list = live.filter((p) => shopsOf(p).includes(ui.store) || (withUnk && !shopsOf(p).length))
-    .sort((a, b) => isBought(a) - isBought(b) || PRIOS.indexOf(a.우선순위) - PRIOS.indexOf(b.우선순위));
+    .sort((a, b) => isBought(a) - isBought(b) || PRIOS.indexOf(prioOf(a)) - PRIOS.indexOf(prioOf(b)));
   const left = list.filter((p) => !isBought(p)).length;
   $('#main').innerHTML = `<div class="store-head">${headImg()}<div><h2>${jp ? '매장 모드' : '상점별'}</h2><p>${jp ? '고른 매장에서 살 것만 크게! 누르면 바로 구매 완료' : '고른 상점에서 살 것만 모아 봐요. 누르면 바로 구매 완료'}</p></div></div>
     <div class="chips" role="group" aria-label="${jp ? '판매처' : '상점'}">${stores.map((s) => `<button class="chip" data-st="${esc(s)}" aria-pressed="${ui.store === s}">${esc(s)} <span class="chip-n">${cnt(s)}</span></button>`).join('')}</div>
@@ -784,7 +786,7 @@ function renderReport() {
       ${Object.keys(byStore).length ? Object.entries(byStore).map(([k, v]) => `<div class="rline"><span>${esc(k)}</span><span>${money(v, jp)}</span></div>`).join('') : ''}
     </div>
     <div class="rcard"><h3>산 것 ${bought.length}개</h3>${bought.length ? bought.map((p) => `<button class="rline link" data-open="${esc(p.id)}"><span>${esc(p.이름_한글)}</span><span>${p.구입.가격 ? money(p.구입.가격, jp) : '—'} × ${p.구입.개수 || 1}</span></button>`).join('') : '<p class="sub">아직 없어요</p>'}</div>
-    <div class="rcard"><h3>안 산 것 ${todo.length}개</h3>${todo.map((p) => `<button class="rline link" data-open="${esc(p.id)}"><span>${esc(p.이름_한글)}</span><span class="sub">${esc(p.우선순위)}</span></button>`).join('')}</div>
+    <div class="rcard"><h3>안 산 것 ${todo.length}개</h3>${todo.map((p) => `<button class="rline link" data-open="${esc(p.id)}"><span>${esc(p.이름_한글)}</span><span class="sub">${PRIO_EMO[prioOf(p)]} ${esc(prioOf(p))}</span></button>`).join('')}</div>
     ${skipped.length ? `<div class="rcard"><h3>필요없어진 것 ${skipped.length}개</h3>${skipped.map((p) => `<button class="rline link" data-open="${esc(p.id)}"><span>${esc(p.이름_한글)}</span><span class="sub">${esc(p.필요없음)}</span></button>`).join('')}</div>` : ''}
   </div>`;
   $$('[data-open]').forEach((b) => (b.onclick = () => openDetail(b.dataset.open)));
