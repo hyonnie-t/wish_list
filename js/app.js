@@ -14,7 +14,7 @@ const PHOTO_KINDS = ['정면', '뒷면', '진열대', '색상 구분', '헷갈�
 let products = [];          // 지워지지 않은 상품
 const photos = new Map();   // productId → [사진]
 let S = { rate: DEFAULT_RATE, lists: [], cur: 'japan', stores: [], tab: 'list', view: 'grid' };
-let ui = { q: '', cat: '전체', buy: 'all', prio: '전체', shop: '전체', sort: 'prio', store: null, withUnknown: true };
+let ui = { q: '', cat: '전체', buy: 'all', prio: '전체', shop: '전체', sort: 'prio', store: null, withUnknown: { JPY: true, KRW: false } };
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -707,12 +707,16 @@ function openEdit(id) {
 function renderStore() {
   const jp = isJP(), stores = storesNow();
   if (!stores.includes(ui.store)) ui.store = stores[0];
-  const list = inCur().filter((p) => !isSkipped(p)).filter((p) => shopsOf(p).includes(ui.store) || (ui.withUnknown && !shopsOf(p).length))
+  // 미정 상품 섞어 보기: 여행(엔화)은 기본 켬, 원화 목록은 미정이 많아 상점별 구분이 흐려지니 기본 끔 (2026-11-08)
+  const cur = jp ? 'JPY' : 'KRW', withUnk = ui.withUnknown[cur];
+  const live = inCur().filter((p) => !isSkipped(p));
+  const cnt = (s) => live.filter((p) => !isBought(p) && shopsOf(p).includes(s)).length;
+  const list = live.filter((p) => shopsOf(p).includes(ui.store) || (withUnk && !shopsOf(p).length))
     .sort((a, b) => isBought(a) - isBought(b) || PRIOS.indexOf(a.우선순위) - PRIOS.indexOf(b.우선순위));
   const left = list.filter((p) => !isBought(p)).length;
   $('#main').innerHTML = `<div class="store-head">${headImg()}<div><h2>${jp ? '매장 모드' : '상점별'}</h2><p>${jp ? '고른 매장에서 살 것만 크게! 누르면 바로 구매 완료' : '고른 상점에서 살 것만 모아 봐요. 누르면 바로 구매 완료'}</p></div></div>
-    <div class="chips" role="group" aria-label="${jp ? '판매처' : '상점'}">${stores.map((s) => `<button class="chip" data-st="${esc(s)}" aria-pressed="${ui.store === s}">${esc(s)}</button>`).join('')}</div>
-    <div class="subtools"><label class="toggle"><input type="checkbox" id="unk" ${ui.withUnknown ? 'checked' : ''}> ${jp ? '판매처' : '상점'} 미정도 보기</label><span class="count">남은 것 ${left}개</span></div>
+    <div class="chips" role="group" aria-label="${jp ? '판매처' : '상점'}">${stores.map((s) => `<button class="chip" data-st="${esc(s)}" aria-pressed="${ui.store === s}">${esc(s)} <span class="chip-n">${cnt(s)}</span></button>`).join('')}</div>
+    <div class="subtools"><label class="toggle"><input type="checkbox" id="unk" ${withUnk ? 'checked' : ''}> ${jp ? '판매처' : '상점'} 미정도 보기</label><span class="count">남은 것 ${left}개</span></div>
     <div class="big-list">${list.length ? list.map((p) => {
       const e = estPrice(p), sp = (p.판매처 || []).find((s) => s.이름 === ui.store);
       return `<div class="bigcard ${isBought(p) ? 'bought' : ''}">
@@ -727,7 +731,7 @@ function renderStore() {
         </div></div>`;
     }).join('') : `<div class="empty-msg"><img src="images/mascot-320.png" alt="" width="96" height="96"><p>${stores.length ? '이 매장에서 살 것으로 정한 상품이 없어요.' : '아직 «어디서»를 적은 상품이 없어요. 상품 고치기에서 어디서 살지 적으면 상점별로 모여요.'}</p></div>`}</div>`;
   $$('[data-st]').forEach((b) => (b.onclick = () => { ui.store = b.dataset.st; renderStore(); }));
-  $('#unk').onchange = (e) => { ui.withUnknown = e.target.checked; renderStore(); };
+  $('#unk').onchange = (e) => { ui.withUnknown[cur] = e.target.checked; renderStore(); };
   $$('[data-open]').forEach((b) => (b.onclick = () => openDetail(b.dataset.open)));
   $$('.check').forEach((b) => (b.onclick = () => {
     const p = products.find((x) => x.id === b.dataset.id);
