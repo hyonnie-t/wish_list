@@ -972,6 +972,30 @@ window.addEventListener('offline', updateNet);
 $$('.tab').forEach((t) => (t.onclick = () => { S.tab = t.dataset.tab; db.setMeta('tab', S.tab); window.scrollTo(0, 0); render(); }));
 $('#fab').onclick = () => openEdit(null);
 $('#syncBtn').onclick = () => runSync(true);
+/* 새로고침: 앱 파일 캐시만 비우고 다시 불러온다. IndexedDB·localStorage는 건드리지 않는다 */
+async function doRefresh() {
+  const b = $('#refreshBtn'); b.disabled = true; b.classList.add('spin');
+  if (navigator.onLine !== false) {
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration();
+      await reg?.update().catch(() => {});
+      const ks = await caches.keys();
+      await Promise.all(ks.filter((k) => k.startsWith('wish-list-') || k.startsWith('japan-shopping-')).map((k) => caches.delete(k)));
+    } catch (e) { /* 실패해도 그냥 다시 불러온다 */ }
+  }
+  setTimeout(() => location.reload(), 350);
+}
+function hasOpenWork() {
+  if ($('#sheet').classList.contains('on') || $('#zoom').classList.contains('on') || $('#show').classList.contains('on')) return true;
+  const f = document.activeElement;
+  return !!(f && f !== rateIn && /^(INPUT|TEXTAREA)$/.test(f.tagName) && f.value);
+}
+$('#refreshBtn').onclick = () => {
+  if (!hasOpenWork()) return doRefresh();
+  $('#rfDlg').hidden = false; $('#rfNo').focus();
+};
+$('#rfNo').onclick = () => { $('#rfDlg').hidden = true; };
+$('#rfYes').onclick = () => { $('#rfDlg').hidden = true; doRefresh(); };
 const rateIn = $('#rate');
 db.meta('rate', DEFAULT_RATE).then((r) => (rateIn.value = r));
 rateIn.addEventListener('change', () => setRate(rateIn.value));

@@ -212,13 +212,23 @@ nav.tabs{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-in
 .net{background:var(--butter);color:#6E5400;border-radius:999px;padding:4px 10px;font-size:13px;margin-left:auto;white-space:nowrap}
 .sync{min-width:44px;min-height:44px;border-radius:50%;border:2px solid var(--line);background:#fff;font-size:18px;box-shadow:var(--pop);position:relative;margin-left:auto}
 .net:not([hidden]) + .sync{margin-left:0}
-.sync + .rate{margin-left:0}
+.sync + .refresh,.refresh + .rate{margin-left:0}
 .sync::after{content:"";position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:transparent}
 .sync[data-state=ok]::after{background:var(--mint)}
 .sync[data-state=busy]::after{background:var(--butter);animation:blink 1s infinite}
 .sync[data-state=err]::after{background:var(--pink)}
 .sync[data-state=off]::after{background:var(--faint)}
 @keyframes blink{50%{opacity:.3}}
+.refresh{min-width:44px;min-height:44px;border-radius:50%;border:2px solid #BFE6D4;background:var(--mint-soft);color:#1F6650;display:grid;place-items:center;box-shadow:var(--pop)}
+.refresh svg{display:block}
+.refresh.spin svg{animation:rfspin .6s ease-in-out}
+.refresh:disabled{opacity:.6}
+@keyframes rfspin{to{transform:rotate(360deg)}}
+.rf-dlg{position:fixed;inset:0;z-index:80;background:rgba(90,64,56,.45);display:grid;place-items:center;padding:16px}
+.rf-box{background:var(--paper);border:3px solid #fff;border-radius:24px;padding:20px 18px 16px;max-width:360px;box-shadow:0 6px 0 rgba(90,64,56,.15)}
+.rf-box p{margin:0 0 14px;font-weight:700;line-height:1.55}
+.rf-act{display:flex;gap:8px;justify-content:flex-end}
+@media (prefers-reduced-motion:reduce){ .refresh.spin svg{animation:none} }
 @media (max-width:420px){ .logo{font-size:17px} .logo small{display:none} .rate{padding:3px 8px} .rate input{width:46px} }
 
 /* 목록(일본 여행·위시리스트…) */

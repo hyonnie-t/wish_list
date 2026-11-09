@@ -29,8 +29,11 @@
   <div class="logo"><img src="images/mascot-320.png" alt="">큰손 효니<span class="logo-rest">의 위시리스트</span><small>♡</small></div>
   <span class="net" id="net" hidden>오프라인</span>
   <button class="sync" id="syncBtn" data-state="" aria-label="구글 시트와 동기화">☁️</button>
+  <button class="refresh" id="refreshBtn" aria-label="새로고침" title="앱 새 버전 불러오기 (저장한 상품은 그대로)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.6h-4.6"/></svg></button>
   <label class="rate" title="최근 1년 평균 9.20원이 기본값">¥1 <input id="rate" inputmode="decimal" aria-label="환율 1엔당 원">원</label>
 </div></header>
+
+<div class="rf-dlg" id="rfDlg" role="alertdialog" aria-modal="true" aria-labelledby="rfT" hidden><div class="rf-box"><p id="rfT">열어 둔 창이나 입력 중인 내용이 있어요. 새로고침하면 아직 저장하지 않은 입력은 사라져요. (저장된 상품·사진은 그대로예요)</p><div class="rf-act"><button class="btn" id="rfNo">취소</button><button class="btn dark" id="rfYes">그래도 새로고침</button></div></div></div>
 
 <main class="wrap" id="main"></main>
 
