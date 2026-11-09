@@ -219,7 +219,7 @@ nav.tabs{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-in
 .sync[data-state=err]::after{background:var(--pink)}
 .sync[data-state=off]::after{background:var(--faint)}
 @keyframes blink{50%{opacity:.3}}
-.refresh{min-width:44px;min-height:44px;border-radius:50%;border:2px solid #BFE6D4;background:var(--mint-soft);color:#1F6650;display:grid;place-items:center;box-shadow:var(--pop)}
+.refresh{min-width:44px;min-height:44px;padding:1px 6px;border-radius:50%;border:2px solid #BFE6D4;background:var(--mint-soft);color:#1F6650;display:grid;place-items:center;box-shadow:var(--pop)}
 .refresh svg{display:block}
 .refresh.spin svg{animation:rfspin .6s ease-in-out}
 .refresh:disabled{opacity:.6}
