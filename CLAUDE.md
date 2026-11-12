@@ -14,6 +14,8 @@
 - `apps-script/Code.gs` 시트에 붙는 앱스 스크립트(시트 탭: 상품/사진/설정, 사진 파일은 Drive «일본쇼핑 사진»). onEdit가 시트 직접 수정 시 updatedAt 갱신. `VERSION`(지금 3: 2=목록·링크, 3=필요없음)을 hello·pull로 돌려주고 앱은 `serverV`로 저장해 낮으면 안내한다. 상품 시트 칸은 **맨 뒤에만** 더한다(`sheet_`가 예전 시트에 머리글을 붙임)
 - `data/products.json` 처음 넣는 상품(X 북마크에서 고른 일본 32개 p001~ + 2026-10-29 국내 29개 k001~, 목록 wish). 사진은 레포에 안 넣는다. 2026-11-08부터 Claude가 내장 브라우저의 이 앱(효니가 그 PC에서 시트 연결해 둔 것)에 사진을 IndexedDB `photos`로 넣고 ☁️ 동기화로 시트에 올린다 → 효니는 폰에서 동기화만 누른다(절차: `클로드작업\도구\면세-트래킹\절차.md` 7-2). 연결 안 된 PC에서는 예전처럼 `design/*-가져오기.json`(OneDrive)을 폰 설정 «JSON 가져오기»로 넣는다. 새 id를 더하면 다음에 열 때 그것만 추가됨. 이미 있는 상품은 폰에서 빈 칸(가격·어디·링크·용량·브랜드)만 채우고 출처는 주소 기준으로 더한다(`fillEmpty`)
 - `sw.js` 서비스 워커(앱 파일 캐시, 네트워크 먼저), `manifest.webmanifest`, `icons/`(마스코트), `images/mascot-320.png`(힉스필드로 만든 삼색 고양이, 토끼 시안 스타일. `mascot-dizzy-320.png`는 예산 넘었을 때 눈 돌아간 고양이). 힉스필드 원본은 `design/higgsfield/`(gitignore, OneDrive에만), `fonts/Jua-Regular.ttf`(OFL)
+- `icons/icon-maskable-512.png` 안드로이드 둥근 아이콘용(2026-11-12, `icon-512.png`를 같은 바탕색 위에 80%로 줄여 안전 영역 안에 둠)
+- `js/install.js` «홈 화면에 추가» 단추(책장·시간표와 같은 파일, 다른 파일에 기대지 않음). 단추는 설정 탭 «백업» 칸의 `[data-install]`이고, 설정을 그릴 때 `hyonnieInstall.sync()`를 부른다
 - `preview.html` 처음 디자인 시안(참고용)
 
 ## 규칙
