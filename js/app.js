@@ -49,10 +49,24 @@ async function boot() {
   S.tab = await db.meta('tab', 'list');
   S.stores = await db.meta('stores', []);
   await seed();
+  await fixCats();
   await loadAll();
   render();
   updateNet();
   autoSync(1500);
+}
+
+// 앱에 없는 분류로 들어간 상품을 맞는 분류로 옮긴다(2026-11-12: 면세 정기 작업이 «화장품»으로 넣은 6개, 형광펜 «생활용품/문구»).
+// 열 때마다 돌지만 아직 틀린 값일 때만 고친다. updatedAt은 fillEmpty처럼 1만 올려 다른 기기가 그새 고친 게 있으면 그쪽이 이긴다
+const CAT_FIX = { '화장품': '뷰티' };
+async function fixCats() {
+  for (const p of await db.all('products')) {
+    if (p.deleted) continue;
+    let to = null;
+    if (CAT_FIX[p.대분류]) to = CAT_FIX[p.대분류];
+    else if (p.대분류 === '생활용품' && p.세부분류 === '문구') to = '책·문구';
+    if (to) await db.put('products', { ...p, 대분류: to, updatedAt: (p.updatedAt || 0) + 1, _dirty: true });
+  }
 }
 
 // 처음 열 때 data/products.json을 넣는다. 나중에 json에 새 id가 생기면 그것만 더한다.
