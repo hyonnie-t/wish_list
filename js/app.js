@@ -402,12 +402,12 @@ function openDetail(id) {
         ${p.읽는법 ? `<div class="jp reading">${esc(p.읽는법)}</div>` : ''}
         <div class="kr">${esc(p.이름_한글)}</div>
         ${p.용량_수량 ? `<div class="sub">${esc(p.용량_수량)}</div>` : ''}
-        <button class="btn dark block" id="showBtn" style="margin-top:12px">직원에게 보여 주기 (크게)</button>
+        <button class="btn dark block" id="showBtn" style="margin-top:16px">직원에게 보여 주기 (크게)</button>
       </div>` : `<div class="d-jp">
         ${p.브랜드_한글 ? `<div class="brandjp">${esc(p.브랜드_한글)}</div>` : ''}
         <div class="big">${esc(p.이름_한글)}</div>
         ${p.용량_수량 ? `<div class="sub">${esc(p.용량_수량)}</div>` : ''}
-        ${link ? `<a class="btn dark block" href="${esc(link)}" target="_blank" rel="noopener" style="margin-top:12px">🔗 사러 가기</a>` : ''}
+        ${link ? `<a class="btn dark block" href="${esc(link)}" target="_blank" rel="noopener" style="margin-top:16px">🔗 사러 가기</a>` : ''}
       </div>`}
       ${isBought(p) || isSkipped(p) ? '' : `<div class="sec when-pick"><h3>언제 살까</h3><div class="seg" role="group" aria-label="언제 살까">${PRIOS.map((x) => `<button class="seg-b ${PRIO_CLS[x]}" data-when="${x}" aria-pressed="${prioOf(p) === x}">${PRIO_EMO[x]} ${x}</button>`).join('')}</div></div>`}
       ${jp ? `<div class="prices">
@@ -832,7 +832,7 @@ async function renderSet() {
         <input data-lb="${i}" inputmode="numeric" value="${l.예산 || ''}" placeholder="예산 (${l.통화 === 'JPY' ? '¥' : '₩'})" aria-label="${esc(l.이름)} 예산">
         <button class="btn small" data-ld="${i}" aria-label="${esc(l.이름)} 지우기" ${S.lists.length < 2 || cnt(l.id) ? 'disabled' : ''}>×</button>
       </div>`).join('')}</div>
-      <div class="row2" style="margin-top:10px"><input id="newList" placeholder="새 목록 (예: 생일 선물)"><button class="btn" id="addList">＋ 목록</button></div>
+      <div class="row2" style="margin-top:8px"><input id="newList" placeholder="새 목록 (예: 생일 선물)"><button class="btn" id="addList">＋ 목록</button></div>
       <p class="sub">예산을 비우면 예상 합계가 기준이에요. 산 돈이 80%를 넘으면 고양이가 비틀거리고, 넘기면 눈이 돌아가요 🌀 · 담긴 게 있는 목록은 지울 수 없어요.</p>
     </div>
     <div class="rcard"><h3>환율</h3>
@@ -841,7 +841,7 @@ async function renderSet() {
     </div>
     <div class="rcard"><h3>일본 판매처</h3>
       <div class="tags" id="storeTags">${S.stores.map((s, i) => `<span class="tag">${esc(s)} <button class="x" data-rm="${i}" aria-label="${esc(s)} 빼기">×</button></span>`).join('')}</div>
-      <div class="row2" style="margin-top:10px"><input id="newStore" placeholder="새 판매처 (예: 스기약국)"><button class="btn" id="addStore">추가</button></div>
+      <div class="row2" style="margin-top:8px"><input id="newStore" placeholder="새 판매처 (예: 스기약국)"><button class="btn" id="addStore">추가</button></div>
     </div>
     <div class="rcard"><h3>구글 시트 동기화</h3>
       <label class="field">웹 앱 주소<input id="sUrl" value="${esc(cfg.url)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
