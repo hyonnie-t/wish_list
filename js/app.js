@@ -840,10 +840,12 @@ async function renderSet() {
       <div style="display:grid;gap:8px">
         <button class="btn" id="exp">JSON으로 내보내기 (사진 포함)</button>
         <label class="btn file"><input type="file" accept="application/json,.json" id="imp" hidden>JSON 가져오기</label>
+        <button class="btn install" type="button" data-install hidden>📲 홈 화면에 추가</button>
       </div>
       <p class="sub">${usage}${persisted ? ' · 저장소 보호 켜짐' : ' · 홈 화면에 추가하면 저장소가 더 안전해요'}</p>
     </div>
   </div>`;
+  window.hyonnieInstall?.sync(); // «홈 화면에 추가» 단추는 설치할 수 있을 때만 보인다(js/install.js)
   $('#rate2').onchange = (e) => setRate(e.target.value);
   $$('[data-ln]').forEach((x) => (x.onchange = async () => { const n = x.value.trim(); if (!n) { x.value = S.lists[+x.dataset.ln].이름; return; } S.lists[+x.dataset.ln].이름 = n; await saveLists(); render(); }));
   $$('[data-lc]').forEach((x) => (x.onchange = async () => {
@@ -974,15 +976,16 @@ $('#fab').onclick = () => openEdit(null);
 $('#syncBtn').onclick = () => runSync(true);
 /* 새로고침: 앱 파일 캐시만 비우고 다시 불러온다. IndexedDB·localStorage는 건드리지 않는다 */
 async function doRefresh() {
+  // 인터넷이 끊겨 있으면 새 버전을 받을 수 없으니 다시 불러오지 않는다(개인 앱 새로고침 공통 규칙)
+  if (navigator.onLine === false) { toast('인터넷이 끊겨 있어요. 연결되면 다시 눌러 주세요'); return; }
   const b = $('#refreshBtn'); b.disabled = true; b.classList.add('spin');
-  if (navigator.onLine !== false) {
-    try {
-      const reg = await navigator.serviceWorker?.getRegistration();
-      await reg?.update().catch(() => {});
-      const ks = await caches.keys();
-      await Promise.all(ks.filter((k) => k.startsWith('wish-list-') || k.startsWith('japan-shopping-')).map((k) => caches.delete(k)));
-    } catch (e) { /* 실패해도 그냥 다시 불러온다 */ }
-  }
+  const limit = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+  try {
+    const reg = await limit(navigator.serviceWorker?.getRegistration(), 2000);
+    if (reg) await limit(reg.update().catch(() => {}), 3000); // 신호가 약해도 3초까지만 기다린다
+    const ks = await caches.keys();
+    await Promise.all(ks.filter((k) => k.startsWith('wish-list-') || k.startsWith('japan-shopping-')).map((k) => caches.delete(k)));
+  } catch (e) { /* 실패해도 그냥 다시 불러온다 */ }
   setTimeout(() => location.reload(), 350);
 }
 function hasOpenWork() {
@@ -991,7 +994,7 @@ function hasOpenWork() {
   return !!(f && f !== rateIn && /^(INPUT|TEXTAREA)$/.test(f.tagName) && f.value);
 }
 $('#refreshBtn').onclick = () => {
-  if (!hasOpenWork()) return doRefresh();
+  if (!hasOpenWork() || navigator.onLine === false) return doRefresh();
   $('#rfDlg').hidden = false; $('#rfNo').focus();
 };
 $('#rfNo').onclick = () => { $('#rfDlg').hidden = true; };

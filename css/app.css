@@ -138,6 +138,9 @@ nav.tabs{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-in
 .btn.primary{background:var(--pink);border-color:var(--pink-deep);color:#fff;box-shadow:var(--pop-pink)}
 .btn.dark{background:var(--mint);border-color:#236B53;color:#fff;box-shadow:0 3px 0 #1D5A46}
 .btn.block{width:100%}
+/* «홈 화면에 추가»: 설치할 수 있을 때 살짝 나타남(js/install.js가 hidden을 푼다) */
+.btn.install{animation:installIn .25s ease-out}
+@keyframes installIn{from{opacity:0}to{opacity:1}}
 .prices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pbox{background:var(--card);border-radius:20px;padding:12px 14px;border:2px solid var(--line)}
 .pbox .k{font-size:12px;color:var(--sub);font-weight:700}.pbox .v{font-size:20px;font-weight:900}
