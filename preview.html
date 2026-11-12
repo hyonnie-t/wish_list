@@ -396,7 +396,7 @@ function openDetail(id){
   const slides = ['정면','뒷면','진열대'];
   const gain = p.한국가격?.금액 && e ? p.한국가격.금액 - e * st.rate : null;
   openSheet(`<div class="grab"></div><button class="sheet-close" aria-label="닫기">×</button>
-    <div class="slider" id="slider">${slides.map(s => `<div class="slide" style="background:${catVar(p.대분류)}"><span style="display:grid;place-items:center;gap:10px"><span style="font-size:64px;line-height:1">${CAT_EMO[p.대분류]||'🎀'}</span><span class="jp" style="font-size:18px;font-weight:800;background:#fff;border-radius:999px;padding:4px 16px;transform:rotate(-3deg)">${esc(p.브랜드_일본어||p.브랜드_한글)}</span></span><span class="lbl">${s} · 사진 넣기 전</span></div>`).join('')}</div>
+    <div class="slider" id="slider">${slides.map(s => `<div class="slide" style="background:${catVar(p.대분류)}"><span style="display:grid;place-items:center;gap:var(--space-2)"><span style="font-size:64px;line-height:1">${CAT_EMO[p.대분류]||'🎀'}</span><span class="jp" style="font-size:18px;font-weight:800;background:#fff;border-radius:999px;padding:var(--space-1) var(--space-3);transform:rotate(-3deg)">${esc(p.브랜드_일본어||p.브랜드_한글)}</span></span><span class="lbl">${s} · 사진 넣기 전</span></div>`).join('')}</div>
     <div class="dots" id="dots">${slides.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div>
     <div class="d-body">
       <div class="d-jp">
@@ -404,7 +404,7 @@ function openDetail(id){
         <div class="big ${p.이름_일본어?'':'empty'}">${p.이름_일본어 ? esc(p.이름_일본어) : '일본어 이름 확인 필요'}</div>
         ${p.읽는법 ? `<div class="jp" style="color:var(--sub)">${esc(p.읽는법)}</div>` : ''}
         <div class="kr">${esc(p.이름_한글)}</div>
-        <button class="btn dark block" id="showBtn" style="margin-top:12px">직원에게 보여 주기 (크게)</button>
+        <button class="btn dark block" id="showBtn" style="margin-top:var(--space-3)">직원에게 보여 주기 (크게)</button>
       </div>
       <div class="prices">
         <div class="pbox"><div class="k">세금 포함</div><div class="v">${e!=null?yen(e):'—'}</div></div>
@@ -518,7 +518,7 @@ function renderReport(){
       <div class="rline"><span>한국 가격 대비 절약</span><b style="color:var(--matcha)">${t.saved?won(t.saved):'한국 가격을 넣으면 계산돼요'}</b></div>
     </div>
     <div class="rcard"><h3>산 것 ${bought.length}개</h3>${bought.length ? bought.map(p=>`<div class="rline"><span>${esc(p.이름_한글)}</span><span>${yen(st.bought[p.id].가격)}×${st.bought[p.id].개수}</span></div>`).join('') : '<p style="color:var(--sub);margin:0">아직 없어요</p>'}</div>
-    <div class="rcard"><h3>안 산 것 ${todo.length}개</h3>${todo.slice(0,12).map(p=>`<div class="rline"><span>${esc(p.이름_한글)}</span><span style="color:var(--sub)">${esc(p.우선순위)}</span></div>`).join('')}${todo.length>12?`<p style="color:var(--sub);margin:8px 0 0">외 ${todo.length-12}개</p>`:''}</div>
+    <div class="rcard"><h3>안 산 것 ${todo.length}개</h3>${todo.slice(0,12).map(p=>`<div class="rline"><span>${esc(p.이름_한글)}</span><span style="color:var(--sub)">${esc(p.우선순위)}</span></div>`).join('')}${todo.length>12?`<p style="color:var(--sub);margin:var(--space-2) 0 0">외 ${todo.length-12}개</p>`:''}</div>
   </div>`;
 }
 
@@ -526,7 +526,7 @@ function renderSet(){
   $('#main').innerHTML = `<div class="store-head"><img src="images/mascot-320.png" alt=""><div><h2>설정</h2><p>미리보기라 아래 기능은 아직 동작하지 않아요</p></div></div>
   <div class="report">
     <div class="rcard"><h3>판매처 목록</h3><div class="tags">${data.판매처목록.map(s=>`<span class="tag">${s}</span>`).join('')}</div></div>
-    <div class="rcard"><h3>백업</h3><div style="display:grid;gap:8px"><button class="btn" disabled>JSON 내보내기 (사진 포함)</button><button class="btn" disabled>JSON 가져오기</button></div></div>
+    <div class="rcard"><h3>백업</h3><div style="display:grid;gap:var(--space-2)"><button class="btn" disabled>JSON 내보내기 (사진 포함)</button><button class="btn" disabled>JSON 가져오기</button></div></div>
     <div class="rcard"><h3>미리보기 기록</h3><button class="btn" id="reset">체크 기록 지우기</button></div>
   </div>`;
   $('#reset').onclick = () => { st.bought = {}; save(); toast('체크 기록을 지웠어요', () => {}); };
