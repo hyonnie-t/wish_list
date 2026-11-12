@@ -4,7 +4,7 @@ const VERSION = 'v33';
 const CACHE = 'wish-list-' + VERSION;
 const FILES = [
   './', 'index.html', 'css/app.css', 'js/app.js', 'js/db.js', 'js/photo.js', 'js/sync.js', 'js/install.js',
-  'data/products.json', 'images/mascot-320.png', 'images/mascot-dizzy-320.png', 'fonts/Jua-Regular.ttf',
+  'data/products.json', 'images/mascot-320.png', 'images/mascot-dizzy-320.png', 'fonts/Jua-core.woff2',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'manifest.webmanifest',
 ];
 

@@ -1,4 +1,5 @@
-@font-face{font-family:"Jua";src:url("../fonts/Jua-Regular.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"Jua";src:url("../fonts/Jua-core.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"Jua";src:url("../fonts/Jua-rest.woff2") format("woff2");font-display:swap;unicode-range:U+2605-2606,U+2665,U+ad1e,U+ad65,U+ae86,U+aed2,U+b630,U+b641,U+bdc0-bdc1,U+bf5c-bf5d,U+bf71,U+c03d,U+c0fe,U+ca25,U+cc71,U+d409,U+d561}
 :root{
   --paper:#FFF6EE; --dot:#F7DCCD; --card:#FFFFFF; --ink:#5A4038; --sub:#7A6057; --faint:#85695F; --line:#F3DACD;
   --pink:#D23F6A; --pink-deep:#B52F58; --pink-soft:#FFE3EB; --mint:#2A7F62; --mint-soft:#DDF4EA; --butter:#FFE08A; --butter-soft:#FFF4CF; --lav:#CDB8F2;
